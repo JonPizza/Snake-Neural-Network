@@ -152,7 +152,7 @@ class Neuron:
 
 def read_file(snake_name):
     data_dict = {}
-    with open(f'Snakes/{snake_name}.txt') as snake_brain:
+    with open(f'{snake_name}') as snake_brain:
         data = snake_brain.read()
         data = data.split('\n\n\n')[:2]
 

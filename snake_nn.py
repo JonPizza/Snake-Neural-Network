@@ -1,17 +1,13 @@
 import curses
 from curses import wrapper
+import signal
 
 import sys
 import time
 import random
 import epic_nn as epic
 
-thingy = {
-    'KEY_RIGHT': [1, 0, 0, 0],
-    'KEY_LEFT': [0, 1, 0, 0],
-    'KEY_DOWN': [0, 0, 1, 0],
-    'KEY_UP': [0, 0, 0, 1]
-}
+import glob
 
 class SnakeGame:
     def __init__(self, snake, last_move, food, eaten):
@@ -38,9 +34,9 @@ class SnakeGame:
             self.snake.append((head[0], head[1]-1))
         elif self.last_move == 'd':
             self.snake.append((head[0], head[1]+1))
-        
+
         if self.snake[-1] in self.snake[:-1]:
-            raise Exception("hehe you are bad loooooooool")
+            raise Exception('ur bad')
 
     def check_eaten(self):
         if self.food == self.snake[-1]:
@@ -55,22 +51,47 @@ class SnakeGame:
 
     def make_tset(self):
         return [
-        self.snake[-1][1]/24,
-        (24 - self.snake[-1][1])/24,
-        self.snake[-1][0]/80,
-        (80 - self.snake[0][0])/80,
-        self.snake[0][1]/24,
-        (24 - self.snake[0][1])/24,
-        self.snake[0][0]/80,
-        (80 - self.snake[-1][0])/80,
-        1 if self.snake[-1][0] == self.food[0] else 0,
-        1 if self.snake[-1][1] == self.food[1] else 0,
-        self.food[0]/80,
-        self.food[1]/24]
+            self.snake[-1][1]/24,
+            (24 - self.snake[-1][1])/24,
+            self.snake[-1][0]/80,
+            (80 - self.snake[0][0])/80,
+            self.snake[0][1]/24,
+            (24 - self.snake[0][1])/24,
+            self.snake[0][0]/80,
+            (80 - self.snake[-1][0])/80,
+            1 if self.snake[-1][0] == self.food[0] else 0,
+            1 if self.snake[-1][1] == self.food[1] else 0,
+            self.food[0]/80,
+            self.food[1]/24]
+
+
+def move(nns, i=0):
+    if i == len(nns)-1:
+        k = nns[i].feed_forward(sg.make_tset())
+        if k.index(max(k)) == 0:
+            sg.update_snake('r')
+        elif k.index(max(k)) == 1:
+            sg.update_snake('l')
+        elif k.index(max(k)) == 2:
+            sg.update_snake('d')
+        elif k.index(max(k)) == 3:
+            sg.update_snake('u')
+        return 
         
+    try:
+        k = nns[i].feed_forward(sg.make_tset())
+        if k.index(max(k)) == 0:
+            sg.update_snake('r')
+        elif k.index(max(k)) == 1:
+            sg.update_snake('l')
+        elif k.index(max(k)) == 2:
+            sg.update_snake('d')
+        elif k.index(max(k)) == 3:
+            sg.update_snake('u')
+    except:
+        if i < len(nns):
+            move(nns, i+1)
 
-
-sg = SnakeGame([[0, 12], [1, 12]], 'r', (50, 12), 0)
 
 def main(stdscr):
     curses.curs_set(0)
@@ -82,22 +103,25 @@ def main(stdscr):
         for part in sg.snake:
             stdscr.addstr(part[1], part[0], '#')
 
-        k = nn.feed_forward(sg.make_tset())
+        move(nns)
 
-        if k.index(max(k)) == 0:
-            sg.update_snake('r')
-        elif k.index(max(k)) == 1:
-            sg.update_snake('l')
-        elif k.index(max(k)) == 2:
-            sg.update_snake('d')
-        elif k.index(max(k)) == 3:
-            sg.update_snake('u')
-        
         stdscr.refresh()
         sg.check_eaten()
-        
-        time.sleep(0.01)
 
-nn = epic.NeuralNetwork(12, 24, 4, epic.sets.sets, 0.01, epic.read_file(sys.argv[1]))
+        time.sleep(0.1)
 
-wrapper(main)
+
+if __name__ == '__main__':
+    sg = SnakeGame([[0, 12], [1, 12]], 'r', (50, 12), 0)
+    if sys.argv[1] == 'all':
+        nns = [epic.NeuralNetwork(12, 24, 4, epic.sets.sets,
+                                  0.01, epic.read_file(fname)) for fname in glob.glob('Snakes/*')]
+    else:
+        nns = [epic.NeuralNetwork(12, 24, 4, epic.sets.sets,
+                                  0.01, epic.read_file('Snakes/' + sys.argv[i] + '.txt')) for i in range(1, len(sys.argv)+1)]
+    try:
+        a = signal.getsignal(signal.SIGTSTP)
+        wrapper(main)
+        signal.signal(signal.SIGTSTP, a)
+    except:
+        print('You are a loser. El Oh El.')
