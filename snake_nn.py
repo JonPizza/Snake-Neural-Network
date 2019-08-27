@@ -2,6 +2,7 @@ import curses
 from curses import wrapper
 import signal
 
+import json
 import sys
 import time
 import random
@@ -35,7 +36,7 @@ class SnakeGame:
         elif self.last_move == 'd':
             self.snake.append((head[0], head[1]+1))
 
-        if self.snake[-1] in self.snake[:-1]:
+        if self.snake[-1] in self.snake[:len(self.snake)-1]:
             raise Exception('ur bad')
 
     def check_eaten(self):
@@ -119,9 +120,17 @@ if __name__ == '__main__':
     else:
         nns = [epic.NeuralNetwork(12, 24, 4, epic.sets.sets,
                                   0.01, epic.read_file('Snakes/' + sys.argv[i] + '.txt')) for i in range(1, len(sys.argv)+1)]
+        nns_dict = {}
+        for nn in nns:
+            nns_dict[nn.calc_total_error(epic.sets.sets)] = nn
+        nn_error = sorted([nn.calc_total_error(epic.sets.sets) for nn in nns])
+        nns = [nns_dict[nn_err] for nn_err in nn_error]
+
+
     try:
         a = signal.getsignal(signal.SIGTSTP)
         wrapper(main)
         signal.signal(signal.SIGTSTP, a)
-    except:
-        print('You are a loser. El Oh El.')
+
+    except Exception as e:
+        print(f'You are a loser because of a secret reason. How sad. {e}')
