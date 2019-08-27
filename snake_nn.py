@@ -36,7 +36,7 @@ class SnakeGame:
         elif self.last_move == 'd':
             self.snake.append((head[0], head[1]+1))
 
-        if head in self.snake[:len(self.snake)-1]:
+        if self.snake[-1] in self.snake[:len(self.snake)-1]:
             raise Exception('ur bad')
 
     def check_eaten(self):
