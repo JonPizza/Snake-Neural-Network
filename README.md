@@ -12,7 +12,7 @@ I suppose you want to learn how to use it?
 
 Fine.
 
-Full post here: https://jon.network/project/38/Improve-Your-Python-2019/
+Full post here: https://jon.network/project/37/Snake-Neural-Network-Fusion-in-Python/
 
 ## How to use it?
 
